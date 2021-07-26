@@ -20,24 +20,25 @@ interface FileWithContent {
 
 type FileType = FileWithUrl | FileWithContent;
 
-async function generatePdf(file: FileType, options?: OptionsProps, callback?: CallBackType) {
+async function generatePdf(file: FileType, options?: OptionsProps, puppeteerConfig?: any, callback?: CallBackType) {
   let args = [
     '--no-sandbox',
     '--disable-setuid-sandbox',
   ];
 
-  if(options?.args) {
+  if (options?.args) {
     args = options.args;
     delete options.args;
   }
 
   const browser = await puppeteer.launch({
-    args: args
+    args: args,
+    ...puppeteerConfig
   });
 
   const page = await browser.newPage();
 
-  if(file.content) {
+  if (file.content) {
     const template = hb.compile(file.content, { strict: true });
     const result = template(file.content);
     const html = result;
@@ -49,37 +50,38 @@ async function generatePdf(file: FileType, options?: OptionsProps, callback?: Ca
     });
   }
 
-  if(file.content) {}
+  if (file.content) { }
 
   return PromiseBluebird.props(page.pdf(options))
-    .then(async function(data) {
-       await browser.close();
+    .then(async function (data) {
+      await browser.close();
 
-       return Buffer.from(Object.values(data));
+      return Buffer.from(Object.values(data));
     }).asCallback(callback);
 }
 
-async function generatePdfs(files: FileType[], options?: OptionsProps, callback?: CallBackType) {
+async function generatePdfs(files: FileType[], options?: OptionsProps, puppeteerConfig?: any, callback?: CallBackType) {
   let args = [
     '--no-sandbox',
     '--disable-setuid-sandbox',
   ];
 
-  if(options?.args) {
+  if (options?.args) {
     args = options.args;
     delete options.args;
   }
 
   const browser = await puppeteer.launch({
-    args: args
+    args: args,
+    ...puppeteerConfig
   });
 
   let pdfs = [];
 
   const page = await browser.newPage();
 
-  for(let file of files) {
-    if(file.content) {
+  for (let file of files) {
+    if (file.content) {
       const template = hb.compile(file.content, { strict: true });
       const result = template(file.content);
       const html = result;
@@ -97,9 +99,9 @@ async function generatePdfs(files: FileType[], options?: OptionsProps, callback?
   }
 
   return PromiseBluebird.resolve(pdfs)
-    .then(async function(data) {
-       await browser.close();
-       return data;
+    .then(async function (data) {
+      await browser.close();
+      return data;
     }).asCallback(callback);
 }
 
